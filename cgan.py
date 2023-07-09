@@ -2,13 +2,14 @@ from torch import nn
 import torch
 import torchvision
 import torchvision.transforms as transforms
+from tqdm import tqdm
 
 
 class G_model(nn.Module):
     def __init__(self):
         # add flatten here
         super().__init__()
-
+        self.unflatten = nn.Unflatten(-1, (28, 28))
         self.model = nn.Sequential(
             nn.Linear(784, 784 * 2),
             nn.LeakyReLU(),
@@ -16,8 +17,7 @@ class G_model(nn.Module):
         )
 
     def forward(self, X):
-        return self.model(X)
-
+        return self.unflatten(self.model(torch.flatten(X, -2, -1)))
 
 class D_model(nn.Module):
     def __init__(self, n_classes):
@@ -40,64 +40,108 @@ class D_model(nn.Module):
         return self.model(X)
 
 
+# class GAN(nn.Module):
+#     def __init__(self, n_classes):
+#         super().__init__()
+#         self.G = G_model()
+#         self.D = D_model()
+
+#     def train(self):
+#         # not clear where it should be, I think it should be in forward, somehow
+#         criterion = nn.BCEWithLogitsLoss()
+
+#         optimizer_G = torch.optim.SGD(
+#             self.G.parameters(), lr=0.01, momentum=0.9)
+#         optimizer_D = torch.optim.SGD(
+#             self.D.parameters(), lr=0.01, momentum=0.9)
+
+#         noise = torch.randn(size=(32, len(X), 28, 28))
+#         zeros = torch.zeros(len(X))
+#         ones = torch.ones(len(X))
+
+#         EPOCHES = 10
+#         dataloader = []  # TODO
+
+#         for _ in range(EPOCHES):
+#             for X, _ in dataloader:
+
+#                 # iteration for discriminator
+#                 z = self.G(noise)
+#                 pred_fake = self.D(z.detach())
+#                 pred_real = self.D(X)
+
+#                 D_loss = criterion(pred_fake, zeros) + \
+#                     criterion(pred_real, ones)
+#                 D_loss.backward()
+
+#                 optimizer_D.step()
+
+#                 # iteration for the generator
+#                 pred = self.D(z)
+#                 G_loss = criterion(pred, ones)
+#                 G_loss.backward()
+#                 optimizer_G.step()
+
+#                 optimizer_D.zero_grad()
+#                 optimizer_G.zero_grad()
+
 class GAN(nn.Module):
-    # Just concat initial picture with noise?
     def __init__(self, n_classes):
         super().__init__()
         self.G = G_model()
         self.D = D_model(n_classes)
 
-    def forward(self):
-        pass
-
-
-class GAN(nn.Module):
-    def __init__(self, n_classes):
-        super().__init__()
-        self.G = G_model()
-        self.D = D_model()
-
-    def train(self):
+    def train(self, dataloader):
         # not clear where it should be, I think it should be in forward, somehow
         criterion = nn.BCEWithLogitsLoss()
 
-        optimizer_G = torch.optim.SGD(self.G.parameters(), lr=0.01, momentum=0.9)
-        optimizer_D = torch.optim.SGD(self.D.parameters(), lr=0.01, momentum=0.9)
+        optimizer_G = torch.optim.SGD(
+            self.G.parameters(), lr=0.01, momentum=0.9)
+        optimizer_D = torch.optim.SGD(
+            self.D.parameters(), lr=0.01, momentum=0.9)
+        
+        batch_size = dataloader.batch_size
 
-        noise = torch.randn(size=(32, len(X), 28, 28))
-        zeros = torch.zeros(len(X))
-        ones = torch.ones(len(X))
+        zeros = torch.zeros(batch_size)
+        ones = torch.ones(batch_size)
 
         EPOCHES = 10
-        batch_size = 32
-        dataloader = [] # TODO
+        G_loss_lst, D_loss_lst = [], []
 
-        for _ in range(EPOCHES):
+
+        for _ in tqdm(range(EPOCHES)):
+            G_running_loss = 0
+            D_running_loss = 0
+
             for X, _ in dataloader:
-
+                noise = torch.randn(size=(batch_size, 1, 28, 28))
                 # iteration for discriminator
                 z = self.G(noise)
-                pred_fake = self.D(z.detach())
-                pred_real = self.D(X)
+                pred_fake = self.D(z.detach()).squeeze(-1)
+                pred_real = self.D(X).squeeze(-1)
 
-                D_loss = criterion(pred_fake, zeros) + criterion(pred_real, ones)
+                D_loss = criterion(pred_fake, zeros) + \
+                    criterion(pred_real, ones)
                 D_loss.backward()
-
                 optimizer_D.step()
+                D_running_loss += D_loss.item()
 
                 # iteration for the generator
-                pred = self.D(z)
+                pred = self.D(z).squeeze(-1)
                 G_loss = criterion(pred, ones)
+
+
                 G_loss.backward()
                 optimizer_G.step()
+                G_running_loss += G_loss.item()
 
                 optimizer_D.zero_grad()
                 optimizer_G.zero_grad()
+                print(D_loss)
+            G_loss_lst.append(G_running_loss)
+            D_loss_lst.append(D_running_loss)
 
-
-class CGAN(nn.Module):
-    pass
-
+        return G_loss_lst, D_loss_lst
 
 if __name__ == "__main__":
     pass
