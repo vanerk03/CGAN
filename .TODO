@@ -1,0 +1,3 @@
+- Split train into two functions and run train from the main
+- Add logging with weights and biases
+- Experiment with gradient norm
