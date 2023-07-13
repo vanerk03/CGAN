@@ -10,15 +10,30 @@ References:
 8. https://machinelearningmastery.com/how-to-develop-a-conditional-generative-adversarial-network-from-scratch/
 9. https://www.kaggle.com/code/kmldas/mnist-generative-adverserial-networks-in-pytorch
 10. http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/
+11. https://arxiv.org/pdf/1611.07004v3.pdf
 
-### Conditional GAN on MNIST dataset
+#### TODO ADD ARCHITECTURE IMAGE
+
+## Details
+
+### GAN
+
+### CGAN (MLP + MLP) on MNIST
 ![Conditioned sample](images/cgan_MNIST.png)
 Parameters:
 50 Epoches, Discriminator and Generator are both of MLP architecture
 Trained with Adam + Adam, lr = 3e-4 (hands down the best one for Adam)
-#### TODO ADD ARCHITECTURE IMAGE
+### CGAN (Unet + PatchGAN)
 
-### How Conditional GAN embdeddings work
+### Unet + L1
+![Facade dataset](images/L1_facade.png)
+![Facade dataset](images/L1_facade_2.png)
+
+Trained with mirroring, 200 Epoches, Adam with lr = 3e-4 
+
+### CGAN (Unet + PatchGAN + L1)
+
+#### How Conditional GAN embdeddings work
 There are many ways to encode and incorporate the class labels into the discriminator and generator models. A best practice involves using an embedding layer followed by a fully connected layer with a linear activation that scales the embedding to the size of the image before concatenating it in the model as an additional channel or feature map.
 
 A version of this recommendation was described in the 2015 paper titled “Deep Generative Image Models using a Laplacian Pyramid of Adversarial Networks.”
