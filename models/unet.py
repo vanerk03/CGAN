@@ -5,6 +5,7 @@ import torch
 # UNet class
 # =========================================
 
+
 class UNet(nn.Module):
     def __init__(self, in_channels=3, features=[64, 128, 256, 512, 512, 512, 512, 512]):
         # TODO: take into account picture size, crop/resize
@@ -20,7 +21,6 @@ class UNet(nn.Module):
 
         # CD512-CD1024-CD1024-C1024-C1024-C512-C256-C128
         self.decoder = nn.ModuleList()
-
 
         for i, feature in enumerate(features):
             batch_norm = True
@@ -56,7 +56,7 @@ class UNet(nn.Module):
             dropout = True
             activation = "relu"
             in_channels_ = feature * 2
-            
+
             if i == len(features) - 1:
                 out_channels_ = 3
             else:
@@ -77,7 +77,6 @@ class UNet(nn.Module):
                 batch_norm=batch_norm,
                 downsample=False)
             )
-
 
         # TODO: check the last dimension: https://machinelearningmastery.com/how-to-implement-pix2pix-gan-models-from-scratch-with-keras/
         # (None, 128, 256, 256)
@@ -113,13 +112,21 @@ class UNet(nn.Module):
             # print("-" * 20)
 
         return self.activation(X)
-    
+
 # =========================================
 # Helper classes
 # =========================================
 
+
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, activation: str, batch_norm=True, dropout=False, downsample=True):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 activation: str,
+                 batch_norm=True,
+                 dropout=False,
+                 downsample=True):
+
         super().__init__()
         model = []
 
@@ -130,15 +137,18 @@ class ConvBlock(nn.Module):
                 out_channels=out_channels,
                 kernel_size=4,
                 stride=2,
-                padding=1
+                padding=1,
+                bias=False if batch_norm else True
             )
+
         else:
             conv = nn.ConvTranspose2d(
                 in_channels=in_channels,
                 out_channels=out_channels,
                 kernel_size=4,
                 stride=2,
-                padding=1
+                padding=1,
+                bias=False if batch_norm else True
             )
 
         model.append(conv)
