@@ -1,2 +1,7 @@
 data
 __**
+pretrained_models
+wandb
+checkpoints
+.gitignore
+models/trash.py
