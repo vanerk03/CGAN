@@ -8,13 +8,12 @@ import torch
 
 class UNet(nn.Module):
     def __init__(self, in_channels=3, features=[64, 128, 256, 512, 512, 512, 512, 512]):
-        # TODO: take into account picture size, crop/resize
-
         super().__init__()
-        # mb add initialization based on our blocks sizes?
-        # potential problem with Device
-        # dropout should not be in eval mode
-        # same for the batchnorm, which is instance norm in our case
+        
+        print("=========| Unet initialized |===========")
+        # TODO: add initialization based on our blocks sizes
+        # TODO: dropout should not be in eval mode
+        # TODO: same for the batchnorm, which is instance norm in our case
 
         # C64-C128-C256-C512-C512-C512-C512-C512
         self.encoder = nn.ModuleList()
@@ -47,8 +46,6 @@ class UNet(nn.Module):
 
             in_channels = feature
 
-        # NOTE WTF WITH DIMENTIONS?????????????????
-
         # decoder
         for i in range(len(features)):
             feature = features[- i - 1]
@@ -59,6 +56,8 @@ class UNet(nn.Module):
 
             if i == len(features) - 1:
                 out_channels_ = 3
+                batch_norm=False
+                activation="no"
             else:
                 out_channels_ = features[- i - 2]
 
@@ -66,8 +65,13 @@ class UNet(nn.Module):
             if i == 0:
                 in_channels_ = feature
                 out_channels_ = feature
-
+            
+            print("log in/out channels:")
             print(f"{i} in:", in_channels_, "out:", out_channels_)
+
+            if i >= 4 or i == 0:
+                # TODO: ugly AF
+                dropout = False
 
             self.decoder.append(ConvBlock(
                 in_channels=in_channels_,
@@ -78,11 +82,7 @@ class UNet(nn.Module):
                 downsample=False)
             )
 
-        # TODO: check the last dimension: https://machinelearningmastery.com/how-to-implement-pix2pix-gan-models-from-scratch-with-keras/
-        # (None, 128, 256, 256)
-        # is number of filters the NC after or before?
-        # in the innermost layer it says nc = 64
-        # but in the outmost it also says 64, why is it 3 at the end then?
+        print("=========| Unet initialized |===========")
 
         self.activation = nn.Tanh()
 
@@ -125,47 +125,53 @@ class ConvBlock(nn.Module):
                  activation: str,
                  batch_norm=True,
                  dropout=False,
-                 downsample=True):
+                 downsample=True,
+                 conv_args=None
+                 ):
 
         super().__init__()
-        model = []
+        if conv_args is None:
+            conv_args = dict()
 
-        # TODO: bias = False?
+        model = []
+        conv_args.setdefault("kernel_size", 4)
+        conv_args.setdefault("stride", 2)
+        conv_args.setdefault("padding", 1)
+        conv_args.setdefault("bias", False if batch_norm else True)
+
+        # print(conv_args, in_channels, out_channels)
+
         if downsample:
             conv = nn.Conv2d(
                 in_channels=in_channels,
                 out_channels=out_channels,
-                kernel_size=4,
-                stride=2,
-                padding=1,
-                bias=False if batch_norm else True
+                **conv_args
             )
 
         else:
             conv = nn.ConvTranspose2d(
                 in_channels=in_channels,
                 out_channels=out_channels,
-                kernel_size=4,
-                stride=2,
-                padding=1,
-                bias=False if batch_norm else True
+                **conv_args
             )
 
         model.append(conv)
-
-        match activation:
-            case "relu":
-                model.append(nn.ReLU())
-            case "leaky":
-                model.append(nn.LeakyReLU(0.2))
-            case _:
-                raise ValueError("Invalid activation, choose: 'relu', 'leaky'")
 
         if batch_norm:
             model.append(nn.BatchNorm2d(out_channels))
 
         if dropout:
             model.append(nn.Dropout(0.5))
+
+        match activation:
+            case "no":
+                pass
+            case "relu":
+                model.append(nn.ReLU(inplace=True))
+            case "leaky":
+                model.append(nn.LeakyReLU(0.2, inplace=True))
+            case _:
+                raise ValueError("Invalid activation, choose: 'relu', 'leaky'")
 
         self.model = nn.Sequential(*model)
 
