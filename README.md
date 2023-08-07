@@ -1,17 +1,19 @@
-## GAN experiments
-Implementation of: 
+## cGAN experiments
+#### Implementation of: 
 - Pix2pix paper: https://arxiv.org/abs/1611.07004
-- cGAN
-- GAN
+- cGAN (For MNIST)
+- GAN (For MNIST)
 
 ### Pix2Pix CGAN (Unet + PatchGAN: GAN Loss + L1)
-#### Facades 100 epoches
-![Facade dataset](images/PatchGAN_100_epoches.png)
+#### Facades 100 epoches (400 images)
+![Facade dataset, 400 images](images/PatchGAN_100_epoches.png)
 
-#### Maps 40 epoches
-![Facade dataset](images/Maps_40_epoches.png)
+#### Maps 40 epoches (1.3k images)
+![Facade dataset, 400 images](images/Maps_40_epoches.png)
+#### CityScapes 20 epoches (3k images)
+![CityScapes](images/CityScapes_15_Epochs.png)
 
-#### Parameters
+#### Parameters:
 D_architecture: `PatchGAN 70x70`
 D_lr = G_lr: `0.0002`
 D_betas = G_betas: `(0.5, 0.999)`
@@ -32,23 +34,15 @@ PatchGAN 70x70 is applied to the image of size of `(256x256)` it downsample to `
 As you can observe from the picture, two MLP is enough to get ahold of such primitive dataset.
 
 Parameters:
-1. 50 Epoches 
-2. Discriminator and Generator are both of MLP architecture
+1. `50` Epoches 
+2. Discriminator and Generator are both of `MLP` architecture
 3. Optimizers: Adam + Adam, `lr = 3e-4`, `betas=(0.9, 0.999)`
 
-### Pix2Pix CGAN (Unet + PatchGAN: only GAN Loss)
-TODO
+Embeddings:
+Learnable `torch.nn.Embedding`
 
 ### Pix2Pix CGAN (Unet + PatchGAN: only L1 Loss)
-TODO
-<!-- 
-
-#### How Conditional GAN embdeddings work
-"There are many ways to encode and incorporate the class labels into the discriminator and generator models. A best practice involves using an embedding layer followed by a fully connected layer with a linear activation that scales the embedding to the size of the image before concatenating it in the model as an additional channel or feature map."
-
-"Deep Generative Image Models using a Laplacian Pyramid of Adversarial Networks."
-
-Used this approach when training cGAN, for pix2pix cGAN concatenation along channel dimension was used along, and noise generation was delegated to Dropout layers. -->
+![](images/PatchGAN_only_L1_60_Epochs.png)
 
 
 ### References:
