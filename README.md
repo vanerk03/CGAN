@@ -41,7 +41,7 @@ Parameters:
 Embeddings:
 Learnable `torch.nn.Embedding`
 
-### Pix2Pix CGAN (Unet + PatchGAN: only L1 Loss)
+### Pix2Pix CGAN (Unet: only L1 Loss)
 ![](images/PatchGAN_only_L1_60_Epochs.png)
 
 
